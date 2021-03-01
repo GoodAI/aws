@@ -1,0 +1,14 @@
+loaded_from_sacred
+.git
+.idea
+.tar
+__pycache__
+.DS_Store
+.pytest_cache
+img
+lightning_logs
+notebooks
+static
+remote/logs
+venv/
+.egg-info

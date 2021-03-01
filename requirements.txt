@@ -1,0 +1,6 @@
+numpy
+prettytable
+paramiko
+pyaml
+botocore
+boto3
