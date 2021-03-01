@@ -1,0 +1,9 @@
+venv/*
+*.yaml
+*.log
+*.xml
+*.CFG
+*.egg-info/
+/.idea/aws.iml
+remote/*
+__pycache__/*
