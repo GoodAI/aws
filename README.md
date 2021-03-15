@@ -1,4 +1,4 @@
-# The AWS management tool
+# The AWS manage tool
 
 A small set of scripts that allows user to deploy local (PyTorch) experiments to AWS and manage them easily.
 

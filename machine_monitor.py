@@ -67,25 +67,31 @@ class MachineMonitor(threading.Thread):
             self.exp_ids[group_id] = parsed
         return self.exp_ids[group_id] if group_id in self.exp_ids is not None else "?"
 
+    @staticmethod
+    def _download_log(remote_name, local_name, ftp_client):
+        if os.path.exists(local_name):
+            os.remove(local_name)
+        try:
+            ftp_client.get(remote_name, local_name)
+            print(f"Downloaded the: {local_name}")
+        except SSHException:
+            print(f"SFTP failed")
+
     def download_logs(self, group_ids: List[int], client: SSHClient):
         """Download all the experiment_{group_id}.log files locally"""
 
         Path(f"remote/logs/{self.name}").mkdir(parents=True, exist_ok=True)
-
         ftp_client = client.open_sftp()
         # print(f"Client open, downloading the logs...")
+
+        remote_name = f"/home/ubuntu/setup.log"
+        local_name = f"remote/logs/{self.name}/setup.log"
+        self._download_log(remote_name, local_name, ftp_client)
 
         for group_id in group_ids:
             remote_name = f"/home/ubuntu/experiment_{group_id}.log"
             local_name = f"remote/logs/{self.name}/experiment_{group_id}.log"
-
-            if os.path.exists(local_name):
-                os.remove(local_name)
-            try:
-                ftp_client.get(remote_name, local_name)
-                print(f"Downloaded the: {local_name}")
-            except SSHException:
-                print(f"SFTP failed")
+            self._download_log(remote_name, local_name, ftp_client)
 
         ftp_client.close()
 

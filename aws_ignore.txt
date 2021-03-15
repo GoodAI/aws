@@ -12,3 +12,4 @@ static
 remote/logs
 venv/
 .egg-info
+temp

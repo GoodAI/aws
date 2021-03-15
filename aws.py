@@ -21,7 +21,7 @@ from launch import (
     start,
     make_script,
     make_parallel_commands,
-    cleanup_instance, _compress_folder,
+    cleanup_instance, _compress_folder, _random_name,
 )
 from machine_monitor import MachineMonitor
 
@@ -200,7 +200,7 @@ def list(owner: Optional[str] = None):
     help="experiment group (when more experiments ran in parallel)",
 )
 def lastline(
-    name: str, owner: Optional[str], setup: bool, debug: bool, sleep: float, group: int
+        name: str, owner: Optional[str], setup: bool, debug: bool, sleep: float, group: int
 ):
     """Show the last line of the experiment_[group].log or setup.log of a given machine"""
     config = loadconfig()
@@ -281,13 +281,19 @@ def tail(name: str, setup: bool, owner: Optional[str], group: int):
 )
 @click.option("--ami", default=None, help="ami_id to be used")
 @click.option("--owner", default=None, help="custom owner of the machine")
+@click.option("--noshutdown/--shutdown", help="Disable the auto-shutdown (debug)" +
+                                              "If the instance is manually shutdown, it still will be auto-terminated")
+@click.option("--delay", default=20,
+              help="Delay in seconds between launching parallel experiments")
 def launch(
-    commands: str,
-    repeats: int,
-    parallel: int,
-    instance: Optional[str],
-    owner: Optional[str],
-    ami: Optional[str],
+        commands: str,
+        repeats: int,
+        parallel: int,
+        instance: Optional[str],
+        owner: Optional[str],
+        ami: Optional[str],
+        noshutdown: bool,
+        delay: int,
 ):
     """Launch machine which will execute given commands (splitted by |) and auto-terminate after"""
     config = loadconfig()
@@ -298,6 +304,10 @@ def launch(
     if owner is not None:
         config.owner = owner
 
+    if noshutdown:
+        print(
+            f'\n\n\txxxxxxxxxxx WARNING xxxxxxxxx This instance will not be automatically shut down!\n\n')
+
     parallel_commands = make_parallel_commands(commands, repeats, parallel)
     print(f"Will launch the following commands:")
     for id, coms in enumerate(parallel_commands):
@@ -306,7 +316,7 @@ def launch(
         print(f"\t\t{formatted}")
 
     instance, name = start(config)
-    upload_and_run(instance, parallel_commands, config)
+    upload_and_run(instance, parallel_commands, config, noshutdown, config.repo_name, delay, name)
     print(f"ALL DONE, instance name: {name}")
 
 
@@ -346,11 +356,19 @@ def makeimage(name: str):
 @click.argument("commands")
 @click.option("--repeats", default=1, help="How many times to repeat given command (s)")
 @click.option("--parallel", default=1, help="How many experiments to run in parallel?")
-def debugscript(commands: str, repeats: int, parallel: int):
+@click.option("--noshutdown/--shutdown", help="Disable the auto-shutdown (debug)")
+@click.option("--delay", default=0, help="Delay in seconds between launching parallel experiments")
+def debugscript(commands: str, repeats: int, parallel: int, noshutdown: bool, delay: int):
     """Debug purposes, prints out the whole script"""
     config = loadconfig()
 
-    _compress_folder()
+    if noshutdown:
+        print(
+            f'\n\n\txxxxxxxxxxx WARNING xxxxxxxxx This instance will not be automatically shut down!\n\n')
+    machine_name = _random_name()
+    print(f'compressing the repository...')
+    filename = _compress_folder(machine_name)
+    print(f'compressed sources to: {filename}')
 
     parallel_commands = make_parallel_commands(commands, repeats, parallel)
 
@@ -360,7 +378,7 @@ def debugscript(commands: str, repeats: int, parallel: int):
         formatted = "\n\t\t".join(coms)
         print(f"\t\t{formatted}")
 
-    script = make_script(parallel_commands, config.repo_name)
+    script = make_script(parallel_commands, config.repo_name, noshutdown, delay=delay)
     print(f"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
     print(script)
 
