@@ -21,4 +21,5 @@ setuptools.setup(
     include_package_data=True,
     packages=setuptools.find_packages(),
     python_requires=">=3.6",
+    install_requires=['numpy', 'prettytable', 'paramiko', 'pyaml', 'botocore', 'boto3', 'click'],
 )

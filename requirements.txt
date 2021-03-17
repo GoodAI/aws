@@ -4,3 +4,4 @@ paramiko
 pyaml
 botocore
 boto3
+click
